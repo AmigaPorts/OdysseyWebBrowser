@@ -33,7 +33,7 @@
 #include <wtf/HashMap.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
-#if PLATFORM(MUI)
+#if PLATFORM(MUI) && !OS(AROS)
 #define INTPTR_MAX  (2147483647)
 #endif
 
