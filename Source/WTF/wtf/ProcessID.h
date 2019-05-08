@@ -45,7 +45,7 @@ inline int getCurrentProcessID()
 #if OS(WINDOWS)
     return GetCurrentProcessId();
 #elif PLATFORM(MUI)
-    return (int) FindTask(NULL);
+    return (IPTR) FindTask(NULL);
 #else
     return getpid();
 #endif
