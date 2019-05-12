@@ -111,7 +111,7 @@ BalMenuItem* ContextMenuItem::createNativeMenuItem(const PlatformMenuItemDescrip
 		{
 			SetAttrs((Object *) menu.subMenu,
 						MUIA_Menu_Enabled, menu.enabled,
-						MUIA_UserData, (ULONG) description,
+						MUIA_UserData, (IPTR) description,
 						MUIA_Menu_Title, (menu.type == SeparatorType || title == NULL) ? NM_BARLABEL : title,
 						TAG_DONE);
 
@@ -120,7 +120,7 @@ BalMenuItem* ContextMenuItem::createNativeMenuItem(const PlatformMenuItemDescrip
 		else
 		{
 			item = (Object *) NewObject(getmenuitemclass(), NULL,
-						MUIA_UserData, (ULONG) description,
+						MUIA_UserData, (IPTR) description,
 						MUIA_Menuitem_Title, (menu.type == SeparatorType || title == NULL) ? NM_BARLABEL : title,
 						MUIA_Menuitem_Enabled, (ULONG) menu.enabled,
 						MUIA_Menuitem_Checkit, menu.type == CheckableActionType,
