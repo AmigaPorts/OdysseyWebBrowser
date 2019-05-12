@@ -172,10 +172,10 @@ struct Data
 Object *create_window(char * url, ULONG isframe, APTR sourceview, APTR features, ULONG privatebrowsing)
 {
 	return (Object *) NewObject(getowbwindowclass(), NULL,
-						MA_OWBBrowser_URL, (ULONG) url,
+						MA_OWBBrowser_URL, (IPTR) url,
 						MA_OWBBrowser_IsFrame, (ULONG) isframe,
-                        MA_OWBBrowser_SourceView, (ULONG) sourceview,
-						MA_OWBWindow_Features, (ULONG) features,
+						MA_OWBBrowser_SourceView, (IPTR) sourceview,
+						MA_OWBWindow_Features, (IPTR) features,
 						MA_OWBBrowser_PrivateBrowsing, privatebrowsing,
 						TAG_DONE);
 }
@@ -528,7 +528,7 @@ DEFNEW
 
 		ADDTAIL(&window_list, data->node);
 
-		return (ULONG)obj;
+		return (IPTR)obj;
 	}
 	else
 	{
@@ -832,49 +832,49 @@ DEFGET
 	{
 		case MA_OWBWindow_ActiveBrowser:
 		{
-			*msg->opg_Storage = (ULONG) data->active_browser;
+			*msg->opg_Storage = (IPTR) data->active_browser;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_ActiveWebInspector:
 		{
-			*msg->opg_Storage = (ULONG) data->active_webinspector;
+			*msg->opg_Storage = (IPTR) data->active_webinspector;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_FastLinkGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->fastlinkgroup;
+			*msg->opg_Storage = (IPTR) data->fastlinkgroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_FastLinkParentGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->fastlinkparentgroup;
+			*msg->opg_Storage = (IPTR) data->fastlinkparentgroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_NavigationGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->navigationgroup;
+			*msg->opg_Storage = (IPTR) data->navigationgroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_AddressBarGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->addressbargroup;
+			*msg->opg_Storage = (IPTR) data->addressbargroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_NetworkLedsGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->networkledsgroup;
+			*msg->opg_Storage = (IPTR) data->networkledsgroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_SearchGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->searchgroup;
+			*msg->opg_Storage = (IPTR) data->searchgroup;
 		}
 		return TRUE;
 
@@ -898,13 +898,13 @@ DEFGET
 
 		case MA_OWBWindow_BookmarkPanelGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->bookmarkpanelgroup;
+			*msg->opg_Storage = (IPTR) data->bookmarkpanelgroup;
 		}
 		return TRUE;
 
 		case MA_OWBWindow_HistoryPanelGroup:
 		{
-			*msg->opg_Storage = (ULONG) data->historypanelgroup;
+			*msg->opg_Storage = (IPTR) data->historypanelgroup;
 		}
 		return TRUE;
 	}
@@ -980,7 +980,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 
 		case MNA_SAVE_SESSION:
 		{
-            DoMethod(app, MM_OWBApp_SaveSession, TRUE);
+			DoMethod(app, MM_OWBApp_SaveSession, TRUE);
 		}
 		break;
 
@@ -1173,8 +1173,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 			DoMethod((Object *)getv(obj, MUIA_Window_Menustrip), MUIM_GetUData, MNA_NO_PANEL, MUIA_Menuitem_Checked, &show);
 			set(obj, MA_OWBWindow_ShowBookmarkPanel, FALSE);
 			set(obj, MA_OWBWindow_ShowHistoryPanel, FALSE);
-            DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
-
+			DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
 			break;
 		}
 
@@ -1183,8 +1182,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 			ULONG show;
 			DoMethod((Object *)getv(obj, MUIA_Window_Menustrip), MUIM_GetUData, MNA_BOOKMARK_PANEL, MUIA_Menuitem_Checked, &show);
 			set(obj, MA_OWBWindow_ShowBookmarkPanel, show);
-            DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
-
+			DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
 			break;
 		}
 
@@ -1193,8 +1191,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 			ULONG show;
 			DoMethod((Object *)getv(obj, MUIA_Window_Menustrip), MUIM_GetUData, MNA_HISTORY_PANEL, MUIA_Menuitem_Checked, &show);
 			set(obj, MA_OWBWindow_ShowHistoryPanel, show);
-            DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
-
+			DoMethod(obj, MM_OWBWindow_UpdatePanelGroup);
 			break;
 		}
 
@@ -1418,7 +1415,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 		{
 			if(msg->action > MNA_DUMMY) 
 			{
-				struct menu_entry *entry = (struct menu_entry *) msg->action;
+				struct menu_entry *entry = (struct menu_entry *) (IPTR) msg->action;
 
 				if(entry)
 				{
@@ -1443,7 +1440,7 @@ DEFSMETHOD(OWBWindow_MenuAction)
 
 							if(enabled)
 							{
-		                        BalWidget *widget = (BalWidget *) getv(data->active_browser, MA_OWBBrowser_Widget);
+								BalWidget *widget = (BalWidget *) getv(data->active_browser, MA_OWBBrowser_Widget);
 								set(widget->browser, MA_OWBBrowser_UserAgent, entry->index);
 							}
 						}
@@ -1574,7 +1571,7 @@ DEFSMETHOD(OWBWindow_LoadURL)
                 String searchString = String::fromUTF8(converted);
 				free(converted);
 				searchString.stripWhiteSpace();
-			    searchString = encodeWithURLEscapeSequences(searchString);
+				searchString = encodeWithURLEscapeSequences(searchString);
 				searchString.replace("+", "%2B");
 				searchString.replace("%20", "+");
 				searchString.replace("&", "%26");
@@ -2025,7 +2022,7 @@ DEFSMETHOD(OWBWindow_AddBrowser)
 		}
 	}
 
-	return (ULONG) widget;
+	return (IPTR) widget;
 }
 
 DEFSMETHOD(OWBWindow_RemoveBrowser)
@@ -2158,13 +2155,13 @@ DEFSMETHOD(OWBWindow_DetachBrowser)
 		if(!msg->window)
 		{
 			Object *window = (Object *) NewObject(getowbwindowclass(), NULL,
-										MA_OWBWindow_InitialBrowser, (ULONG) msg->browser,
+										MA_OWBWindow_InitialBrowser, (IPTR) msg->browser,
 										TAG_DONE);
 
 			if(window)
 			{
-                DoMethod(app, OM_ADDMEMBER, window);
-                set(window, MUIA_Window_Open, TRUE);
+				DoMethod(app, OM_ADDMEMBER, window);
+				set(window, MUIA_Window_Open, TRUE);
 			}
 		
 		}
@@ -2287,7 +2284,7 @@ DEFSMETHOD(OWBWindow_CreateInspector)
 		}
 	}
 
-	return (ULONG) widget;
+	return (IPTR) widget;
 	
 	//return 0;
 }
@@ -2341,8 +2338,8 @@ DEFSMETHOD(OWBWindow_ActivePage)
 
 			SetAttrs(data->navigationgroup,
 					 MA_TransferAnim_Animate, getv(data->active_browser, MA_OWBBrowser_Loading),
-				     MA_Navigation_BackForwardList, (ULONG) ((WebView *) ((BalWidget *)getv(data->active_browser, MA_OWBBrowser_Widget))->webView)->backForwardList(),
-			         TAG_DONE);
+					 MA_Navigation_BackForwardList, (IPTR) ((WebView *) ((BalWidget *)getv(data->active_browser, MA_OWBBrowser_Widget))->webView)->backForwardList(),
+					 TAG_DONE);
 
 			SetAttrs(data->progressgroup, MUIA_Group_ActivePage, getv(data->active_browser, MA_OWBBrowser_Loading) ? 1 : 0, TAG_DONE);
 
@@ -2381,7 +2378,7 @@ DEFSMETHOD(OWBWindow_UpdateNavigation)
 				 MA_Navigation_ForwardEnabled,  getv(data->active_browser, MA_OWBBrowser_ForwardAvailable),
 				 MA_Navigation_ReloadEnabled,   getv(data->active_browser, MA_OWBBrowser_ReloadAvailable),
 				 MA_Navigation_StopEnabled,     getv(data->active_browser, MA_OWBBrowser_StopAvailable),
-		         TAG_DONE);
+				 TAG_DONE);
 	}
 
 	return 0;
@@ -2767,7 +2764,7 @@ DEFSMETHOD(OWBWindow_UpdateMenu)
 		{
 			struct menu_entry *menu_entry = (struct menu_entry *) muiUserData(child);
 
-			if(menu_entry && ((LONG) menu_entry > MNA_DUMMY) && menu_entry->type == MENUTYPE_SPOOF)
+			if(menu_entry && ((IPTR) menu_entry > MNA_DUMMY) && menu_entry->type == MENUTYPE_SPOOF)
 			{
 				if(useragent == String((char *) menu_entry->data))
 				{
@@ -2969,7 +2966,7 @@ DEFSMETHOD(OWBWindow_JavaScriptPrompt)
 	DoMethod(_app(obj), OM_REMMEMBER, req_wnd);
     MUI_DisposeObject(req_wnd);
 
-	return (ULONG) answer;
+	return (IPTR) answer;
 }
 
 /* AutoCompletion */
@@ -3246,7 +3243,7 @@ DEFTMETHOD(OWBWindow_RemoveHistoryPanel)
 
 DEFSMETHOD(OWBWindow_AddClosedView)
 {
-#if !defined(__mc68000__)
+#if !defined(__mc68000__) 
 	GETDATA;
 #define MAX_CLOSED_VIEWS_COUNT 20
 

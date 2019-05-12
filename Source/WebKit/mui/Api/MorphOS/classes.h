@@ -18,7 +18,7 @@
 #include <libraries/mui.h>
 #include <proto/muimaster.h>
 
-#define DEFCLASS(s) ULONG create_##s##class(void); \
+#define DEFCLASS(s) IPTR create_##s##class(void); \
 	struct IClass *get##s##class(void); \
 	APTR get##s##classroot(void); \
 	void delete_##s##class(void)
