@@ -18,7 +18,60 @@
 #include <clib/alib_protos.h>
 #endif /* __SASC */
 
+#ifdef __MORPHOS__
+#ifndef  CLIB_ALIB_PROTOS_H
+#include <clib/alib_protos.h>
+#endif
+#ifndef EMUL_EMULINTERFACE_H
+#include <emul/emulinterface.h>
+#endif
+#ifndef EMUL_EMULREGS_H_
+#include <emul/emulregs.h>
+#endif
+#ifndef INTUITION_CLASSUSR_H
+#include <intuition/classusr.h>
+#endif
+#ifndef LIBRARIES_MUI_H
+#include <libraries/mui.h>
+#endif
+#ifndef PROTO_MUIMASTER_H
+#include <proto/muimaster.h>
+#endif
+#endif
+
 #define MAINTASK
+
+/*
+ * IPTR is an integer type which is large enough to store a pointer
+ */
+
+#if !defined(__AROS__) && !defined(__MORPHOS__)
+typedef ULONG IPTR;
+#endif
+
+
+/*
+ * Endianity
+ */
+
+#if defined(__AROS__)
+#  if AROS_BIG_ENDIAN
+#    define BE_SWAPLONG_C(x) ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
+       (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#    define BE_SWAPWORD_C(x) ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+#    define BE_SWAPLONG(x)   AROS_SWAP_BYTES_LONG((x))
+#    define LE_SWAPLONG_C(x) (x)
+#  else
+#    define BE_SWAPLONG_C(x) (x)
+#    define BE_SWAPWORD_C(x) (x)
+#    define BE_SWAPLONG(x)   (x)
+#    define LE_SWAPLONG_C(x) ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
+       (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#  endif
+#else
+#  include <hardware/byteswap.h>
+#endif
+
 
 /* MUI Macros */
 #ifndef MAKE_ID
@@ -51,9 +104,6 @@
  * Use BEGINMTABLE to start the description of a dispatcher (BEGINMTABLE2 if you need a name)
  */
 #ifdef __GNUC__
-#ifdef __AROS__
-#define BEGINMTABLE static BOOPSI_DISPATCHER(IPTR, dispatch, cl, obj, msg){switch(msg->MethodID){
-#else
 #ifdef __MORPHOS__
 #define BEGINMTABLE static ULONG dispatch(void); \
 	static struct EmulLibEntry GATE_dispatch = \
@@ -65,16 +115,41 @@
 		struct IClass *cl = (struct IClass *)REG_A0; \
 		Msg msg = (Msg)REG_A1; \
 		Object *obj = (Object *)REG_A2; \
-		MAINTASK; \
 		switch (msg->MethodID) \
 		{
 
+#define BEGINMTABLE2(name) static ULONG name##_dispatch(void); \
+	struct EmulLibEntry GATE ##name##_dispatch = \
+	{ \
+		TRAP_LIB, 0, (void (*)(void)) name##_dispatch \
+	}; \
+	static ULONG name##_dispatch(void) \
+	{ \
+		struct IClass *cl = (struct IClass *)REG_A0; \
+		Msg msg = (Msg)REG_A1; \
+		Object *obj = (Object *)REG_A2; \
+		switch (msg->MethodID) \
+		{
+
+#define BEGINMTABLE2_NOGATE(name) \
+	ULONG name##_dispatch(void) \
+	{ \
+		struct IClass *cl = (struct IClass *)REG_A0; \
+		Msg msg = (Msg)REG_A1; \
+		Object *obj = (Object *)REG_A2; \
+		switch (msg->MethodID) \
+		{
+
+#elif __AROS__
+#define BEGINMTABLE static BOOPSI_DISPATCHER(IPTR, dispatch, cl, obj, msg){switch(msg->MethodID){
+#define BEGINMTABLE2(name) static BOOPSI_DISPATCHER(IPTR, name##_dispatch, cl, obj, msg){switch(msg->MethodID){
 #else
 #define BEGINMTABLE static ULONG dispatch( __reg(a0, struct IClass *cl), __reg(a2, Object *obj), __reg(a1, Msg msg)){switch(msg->MethodID){
+#define BEGINMTABLE2(name) static ULONG name##_dispatch( __reg(a0, struct IClass *cl), __reg(a2, Object *obj), __reg(a1, Msg msg)){switch(msg->MethodID){
 #endif /* !__MORPHOS__ */
-#endif
 #else
 #define BEGINMTABLE static ULONG __asm __saveds dispatch( register __a0 struct IClass *cl, register __a2  Object *obj, register __a1 Msg msg ){switch(msg->MethodID){
+#define BEGINMTABLE2(name) static ULONG __asm __saveds name##_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg){switch(msg->MethodID){
 #endif /* __GNUC__ */
 
 /*
@@ -102,7 +177,6 @@
 #define ENDMTABLE }return(DOSUPER);}BOOPSI_DISPATCHER_END
 #endif
 
-
 /* Methods */
 
 #ifdef __INLINED_METHODS
@@ -114,7 +188,7 @@
 /*
  * MUI method (ie. MUIM_List_InsertSingle)
  */
-#define DEFMMETHOD(methodid) METHOD_INLINE static ULONG __attribute__ ((noinline)) handleMUIM_##methodid(struct IClass *cl,Object*obj,struct MUIP_##methodid *msg)
+#define DEFMMETHOD(methodid) METHOD_INLINE static ULONG __attribute__ ((noinline)) handleMUIM_##methodid(struct IClass *cl, Object *obj, struct MUIP_##methodid *msg)
 
 /*
  * Custom method with ONE argument only (no msg[n] please)
@@ -129,38 +203,38 @@
 /*
  * Custom structured method
  */
-#define DEFSMETHOD(name) METHOD_INLINE static ULONG __attribute__ ((noinline)) handleMM_##name(struct IClass *cl,Object*obj,struct MP_##name *msg)
+#define DEFSMETHOD(name) METHOD_INLINE static ULONG __attribute__ ((noinline)) handleMM_##name(struct IClass *cl, Object *obj,struct MP_##name *msg)
 
 /*
  * OM_NEW method (construct)
  */
-#define DEFNEW METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_NEW(struct IClass *cl,Object*obj,struct opSet *msg)
+#define DEFNEW METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_NEW(struct IClass *cl, Object*obj, struct opSet *msg)
 #define DEFCONST DEFNEW
 
 /*
  * OM_SET method
  */
-#define DEFSET METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_SET(struct IClass *cl,Object*obj,struct opSet *msg)
+#define DEFSET METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_SET(struct IClass *cl, Object *obj, struct opSet *msg)
 
 /* 
  * OM_GET method
  */
-#define DEFGET METHOD_INLINE static ULONG handleOM_GET(struct IClass *cl,Object*obj,struct opGet *msg)
+#define DEFGET METHOD_INLINE static ULONG handleOM_GET(struct IClass *cl, Object *obj, struct opGet *msg)
 
 /*
  * OM_ADDMEMBER method
  */
-#define DEFADDMEMBER METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_ADDMEMBER(struct IClass *cl,Object*obj,struct opMember *msg)
+#define DEFADDMEMBER METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_ADDMEMBER(struct IClass *cl, Object *obj, struct opMember *msg)
 
 /*
  * OM_REMMEMBER method
  */
-#define DEFREMMEMBER METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_REMMEMBER(struct IClass *cl,Object*obj,struct opMember *msg)
+#define DEFREMMEMBER METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_REMMEMBER(struct IClass *cl, Object *obj, struct opMember *msg)
 
 /*
  * OM_DISPOSE method (destruct)
  */
-#define DEFDISPOSE METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_DISPOSE( struct IClass *cl,Object*obj,struct opSet *msg)
+#define DEFDISPOSE METHOD_INLINE static ULONG __attribute__ ((noinline)) handleOM_DISPOSE( struct IClass *cl, Object *obj, struct opSet *msg)
 #define DEFDEST DEFDISPOSE
 #define DEFDISP DEFDISPOSE
 
@@ -203,7 +277,7 @@
  * Creates a subclass (no constructor)
  */
 #define DECSUBCLASS_NC(super,name) static struct MUI_CustomClass *mcc##name; \
-	ULONG create_##name(void) \
+	IPTR create_##name(void) \
 	{ \
 		if (!(mcc##name = (struct MUI_CustomClass *)MUI_CreateCustomClass(NULL, super, NULL, sizeof(struct Data), (APTR)DISPATCHERREF))) \
 			return (FALSE); \
@@ -226,10 +300,37 @@
 	}
 
 /*
+ * Creates a subclass (no constructor) with given dispatcher
+ */
+#define DECSUBCLASS2_NC(super,name) static struct MUI_CustomClass *mcc##name; \
+	IPTR create_##name(void) \
+	{ \
+		if (!(mcc##name = (struct MUI_CustomClass *)MUI_CreateCustomClass(NULL, super, NULL, sizeof(struct Data), (APTR)DISPATCHERREF2(name)))) \
+			return (FALSE); \
+			if (MUIMasterBase->lib_Version >= 20) \
+				mcc##name->mcc_Class->cl_ID = #name; \
+		return (TRUE); \
+	} \
+	void delete_##name(void) \
+	{ \
+		if (mcc##name) \
+			MUI_DeleteCustomClass(mcc##name); \
+	} \
+	APTR get##name(void) \
+	{ \
+		return (mcc##name->mcc_Class); \
+	} \
+	APTR get##name##root(void) \
+	{ \
+		return (mcc##name); \
+	}
+
+
+/*
  * Creates a subclass of one of your own subclass (no constructor)
  */
 #define DECSUBCLASSPTR_NC(super,name) static struct MUI_CustomClass *mcc##name; \
-	ULONG create_##name(void) \
+	IPTR create_##name(void) \
 	{ \
 		if (!(mcc##name = (struct MUI_CustomClass *)MUI_CreateCustomClass(NULL, NULL, (struct MUI_CustomClass *) get##super##root(), sizeof(struct Data), (APTR)DISPATCHERREF))) \
 			return (FALSE); \
@@ -264,14 +365,6 @@
 
 /* Hooks */
 
-#ifdef __AROS__
-
-#define MUI_HOOK(n, y, z) \
-    static LONG n##_func(struct Hook * n, y, z); \
-    static struct Hook n##_hook = {{0, 0}, (APTR)n##_func, NULL, NULL}; \
-    static LONG n##_func(struct Hook * n, y, z)
-
-#else
 #ifdef __MORPHOS__
 #define __callback
 
@@ -292,6 +385,11 @@
 	return (n##_GATE2((struct Hook *)REG_A0, (void *)REG_A2, (void *)REG_A1)); } \
 	static struct Hook n##_hook = { { 0, 0}, (ULONG (*)(void))&n, (ULONG (*)(void))&n##_GATE2 , NULL }; \
 	static LONG n##_GATE2(struct Hook *h, y, z)
+#elif __AROS__
+#define MUI_HOOK(n, y, z) \
+    static LONG n##_func(struct Hook * h, y, z); \
+    static struct Hook n##_hook = {{0, 0}, (APTR)n##_func, NULL, NULL}; \
+    static LONG n##_func(struct Hook * h, y, z)
 #else
 #define DEFHOOK(n) static struct Hook n##_hook={0,0,(HOOKFUNC)n##_func}
 
@@ -302,7 +400,6 @@
 
 #define __callback __asm __saveds
 #endif /* !_MORPHOS__ */
-#endif /* !__AROS__ */
 #define _reg(x) register __##x
 
 
