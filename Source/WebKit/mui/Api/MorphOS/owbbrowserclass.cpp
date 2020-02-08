@@ -2473,7 +2473,7 @@ static void cancelled(struct Hook *hook, Object *popupwin, APTR *dummy)
 static void closed(struct Hook *hook, Object *popupwin, APTR *params)
 {
     PopupMenuMorphOS *that = (PopupMenuMorphOS *)params[0];
-    int itemCount = (int)params[1];
+    int itemCount = (IPTR)params[1];
     char ** items = (char **)params[2];
     that->client()->popupDidHide();
 
