@@ -24,7 +24,7 @@ NOWARN_CFLAGS   := $(NOWARN_DEPRECATED_DECLARATIONS)
 NOWARN_CXXFLAGS := $(NOWARN_MISLEADING_INDENTATION) $(NOWARN_UNUSED_FUNCTION) \
                    $(NOWARN_ERROR) $(NOWARN_CONVERSION_NULL) $(NOWARN_FORMAT_TRUNCATION) $(NOWARN_STRINGOP_TRUNCATION) \
                    $(NOWARN_DEPRECATED_DECLARATIONS) $(NOWARN_CLASS_MEMACCESS) $(NOWARN_IMPLICIT_FALLTHROUGH) \
-                   -Wno-cast-align -Wno-expansion-to-defined -Wno-deprecated-copy
+                   -Wno-cast-align -Wno-expansion-to-defined -Wno-deprecated-copy -Wno-redundant-move -Wno-aligned-new
 
 USER_CFLAGS     := $(NOWARN_CFLAGS)
 USER_CXXFLAGS   := $(NOWARN_CXXFLAGS)
@@ -37,7 +37,7 @@ ISA_FLAGS       += $(ISA_MC68020_FLAGS)
 endif
 
 ODYSSEY_OPTIONS := \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_SYSTEM_NAME=AROS \
     -DPORT=MUI \
     -DCAIRO_INCLUDE_DIRS=$(AROS_INCLUDES)/cairo/ \
